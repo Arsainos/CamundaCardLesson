@@ -1,0 +1,930 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" id="Definitions_1ygpz9x" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.6.0">
+  <bpmn:collaboration id="Collaboration_1bhdyw1">
+    <bpmn:participant id="OpenCardParticipant" name="OpenCard" processRef="OpenCardProcess" />
+    <bpmn:participant id="FrontOfficeParticipant" name="FrontOffice" processRef="FrontOfficeProcess" />
+    <bpmn:participant id="CheckClientBlackListParticipant" name="Check Client BlackList" processRef="BlacklistProcess" />
+    <bpmn:messageFlow id="Flow_0c770ev" sourceRef="CheckRequestTask" targetRef="FrontOfficeCheckRequestStartEvent" />
+    <bpmn:messageFlow id="Flow_000mjoi" sourceRef="SendedCheckResultEndEvent" targetRef="CheckResultTask" />
+    <bpmn:messageFlow id="Flow_0xd8exk" sourceRef="BlacklistedRequestTask" targetRef="BlackListServiceCheckedStartEvent" />
+    <bpmn:messageFlow id="Flow_1s5xl6q" sourceRef="SecurityCheckCompletedEndEvent" targetRef="BlacklistedResultTask" />
+  </bpmn:collaboration>
+  <bpmn:process id="OpenCardProcess" name="Open Card" isExecutable="true" camunda:versionTag="Open Card Ver1.0">
+    <bpmn:startEvent id="OpenCardStartEvent" name="OpenCard">
+      <bpmn:outgoing>Flow_0qrip68</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sendTask id="CheckRequestTask" name="Check Request" camunda:type="external" camunda:topic="FrontOfficeCheckRequest">
+      <bpmn:incoming>Flow_0qrip68</bpmn:incoming>
+      <bpmn:outgoing>Flow_1g8v9k4</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:receiveTask id="CheckResultTask" name="Check Result" messageRef="Message_18equk1">
+      <bpmn:incoming>Flow_1g8v9k4</bpmn:incoming>
+      <bpmn:outgoing>Flow_0pkimky</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:exclusiveGateway id="FrontOfficeApprovedGateway" name="Front Office Approved?">
+      <bpmn:incoming>Flow_0pkimky</bpmn:incoming>
+      <bpmn:outgoing>YesSequenceFlow2</bpmn:outgoing>
+      <bpmn:outgoing>NoSequenceFlow2</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sendTask id="BlacklistedRequestTask" name="Blacklisted Request" camunda:type="external" camunda:topic="BlacklistRequest">
+      <bpmn:incoming>NoSequenceFlow3</bpmn:incoming>
+      <bpmn:incoming>Flow_0s32l7p</bpmn:incoming>
+      <bpmn:outgoing>Flow_0we5r9t</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:receiveTask id="BlacklistedResultTask" name="Blacklisted Result" messageRef="Message_0tzxw5p">
+      <bpmn:incoming>Flow_0we5r9t</bpmn:incoming>
+      <bpmn:outgoing>Flow_0io74fq</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:exclusiveGateway id="BlacklistedGateway" name="Blacklisted?">
+      <bpmn:incoming>Flow_0io74fq</bpmn:incoming>
+      <bpmn:outgoing>NoSequenceFlow4</bpmn:outgoing>
+      <bpmn:outgoing>YesSequenceFlow4</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:intermediateThrowEvent id="FrontOfficeNotApprovedEvent" name="Front Office Not Approved">
+      <bpmn:incoming>NoSequenceFlow2</bpmn:incoming>
+      <bpmn:linkEventDefinition id="LinkEventDefinition_0qnw9mx" name="ApprovedStopProcessing" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:intermediateThrowEvent id="ClientInBlackListEvent" name="Client in Black List">
+      <bpmn:incoming>YesSequenceFlow4</bpmn:incoming>
+      <bpmn:linkEventDefinition id="LinkEventDefinition_12dg7vu" name="BlacklistedStopProcessing" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:exclusiveGateway id="AdditionalSecurityCheckGateway" name="Additional Security Check?">
+      <bpmn:incoming>YesSequenceFlow2</bpmn:incoming>
+      <bpmn:outgoing>NoSequenceFlow3</bpmn:outgoing>
+      <bpmn:outgoing>YesSequenceFlow3</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="AdditionalSecurityCheckGateway1" name="Additional Security Check?">
+      <bpmn:incoming>NoSequenceFlow4</bpmn:incoming>
+      <bpmn:outgoing>NoSequenceFlow5</bpmn:outgoing>
+      <bpmn:outgoing>YesSequenceFlow5</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:intermediateThrowEvent id="AdditionalSecurityReminderEvent" name="Additional Security Reminder">
+      <bpmn:incoming>YesSequenceFlow3</bpmn:incoming>
+      <bpmn:outgoing>Flow_0s32l7p</bpmn:outgoing>
+      <bpmn:signalEventDefinition id="SignalEventDefinition_1jl38x9" signalRef="Signal_1gsuxag" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:intermediateThrowEvent id="AdditionalSecurityReminderEvent1" name="Additional Security Reminder">
+      <bpmn:incoming>YesSequenceFlow5</bpmn:incoming>
+      <bpmn:outgoing>Flow_0mackqp</bpmn:outgoing>
+      <bpmn:signalEventDefinition id="SignalEventDefinition_0zlvzro" signalRef="Signal_1gsuxag" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:endEvent id="CardOpenedEndEvent" name="Card Opened">
+      <bpmn:incoming>Flow_0kv6ty8</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="CantOpenCardEndEvent" name="Cant Open Card">
+      <bpmn:incoming>Flow_0jhhwbe</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:intermediateCatchEvent id="ApprovedStopProcessingCatchEvent" name="Approved Stop Processing Catch">
+      <bpmn:outgoing>Flow_0ypz75b</bpmn:outgoing>
+      <bpmn:linkEventDefinition id="LinkEventDefinition_0kcmkzy" name="ApprovedStopProcessing" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="ClientInBlackListCatchEvent" name="Client in Black List Catch">
+      <bpmn:outgoing>Flow_00hwrr3</bpmn:outgoing>
+      <bpmn:linkEventDefinition id="LinkEventDefinition_0rajchb" name="BlacklistedStopProcessing" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:endEvent id="StopProcessEndEvent" name="Stop Process">
+      <bpmn:incoming>Flow_0ypz75b</bpmn:incoming>
+      <bpmn:incoming>Flow_00hwrr3</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:subProcess id="OpenCardSubProcess" name="Open Card">
+      <bpmn:incoming>NoSequenceFlow5</bpmn:incoming>
+      <bpmn:incoming>Flow_0mackqp</bpmn:incoming>
+      <bpmn:outgoing>Flow_0kv6ty8</bpmn:outgoing>
+      <bpmn:startEvent id="StartProcessStartEvent" name="Start Process">
+        <bpmn:outgoing>Flow_1lfq1ht</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:sequenceFlow id="Flow_1lfq1ht" sourceRef="StartProcessStartEvent" targetRef="CreatePlasticCardTask" />
+      <bpmn:task id="SendCardTask" name="Send Card">
+        <bpmn:incoming>Flow_10wn1sl</bpmn:incoming>
+        <bpmn:outgoing>Flow_1h8g742</bpmn:outgoing>
+      </bpmn:task>
+      <bpmn:sequenceFlow id="Flow_10wn1sl" sourceRef="CreatePlasticCardTask" targetRef="SendCardTask" />
+      <bpmn:endEvent id="OpenedEndEvent" name="Opened">
+        <bpmn:incoming>Flow_1h8g742</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_1h8g742" sourceRef="SendCardTask" targetRef="OpenedEndEvent" />
+      <bpmn:boundaryEvent id="Event_1ktt5jb" attachedToRef="CreatePlasticCardTask">
+        <bpmn:compensateEventDefinition id="CompensateEventDefinition_1rreha1" />
+      </bpmn:boundaryEvent>
+      <bpmn:boundaryEvent id="Event_0jv55uf" attachedToRef="SendCardTask">
+        <bpmn:compensateEventDefinition id="CompensateEventDefinition_1ph327f" />
+      </bpmn:boundaryEvent>
+      <bpmn:task id="DestroyCardTask" name="Destroy Card" isForCompensation="true" />
+      <bpmn:task id="ReturnCardToOfficeTask" name="Return card to office" isForCompensation="true" />
+      <bpmn:userTask id="CreatePlasticCardTask" name="Create Plastic Card">
+        <bpmn:extensionElements>
+          <camunda:formData>
+            <camunda:formField id="CompleteFormForCreate" label="Create new card" type="boolean" defaultValue="false" />
+          </camunda:formData>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_1lfq1ht</bpmn:incoming>
+        <bpmn:outgoing>Flow_10wn1sl</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:association id="Association_12ghu95" associationDirection="One" sourceRef="Event_1ktt5jb" targetRef="DestroyCardTask" />
+      <bpmn:association id="Association_16zqjrp" associationDirection="One" sourceRef="Event_0jv55uf" targetRef="ReturnCardToOfficeTask" />
+    </bpmn:subProcess>
+    <bpmn:subProcess id="StopProcessingSubProcess" name="Stop Processing" triggeredByEvent="true">
+      <bpmn:sequenceFlow id="Flow_0wgabqt" sourceRef="StopCurrentProcessStartEvent" targetRef="StopCheckTask" />
+      <bpmn:sequenceFlow id="Flow_1xtcm3z" sourceRef="StopCheckTask" targetRef="StopProcessGateway" />
+      <bpmn:userTask id="StopCheckTask" name="Stop check">
+        <bpmn:extensionElements>
+          <camunda:formData>
+            <camunda:formField id="StopReally" label="Are you sure want to stop all processign for this request" type="boolean" defaultValue="false" />
+          </camunda:formData>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_0wgabqt</bpmn:incoming>
+        <bpmn:outgoing>Flow_1xtcm3z</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:exclusiveGateway id="StopProcessGateway" name="StopProcess?">
+        <bpmn:incoming>Flow_1xtcm3z</bpmn:incoming>
+        <bpmn:outgoing>YesSequenceFlow</bpmn:outgoing>
+        <bpmn:outgoing>NoSequenceFlow1</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:sequenceFlow id="YesSequenceFlow" name="Yes" sourceRef="StopProcessGateway" targetRef="CallStopProcessingEndEvent">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${StopReally}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="NoSequenceFlow1" name="No" sourceRef="StopProcessGateway" targetRef="ContinueEndEvent1">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!StopReally}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:endEvent id="CallStopProcessingEndEvent" name="Call stop processing">
+        <bpmn:incoming>YesSequenceFlow</bpmn:incoming>
+        <bpmn:signalEventDefinition id="SignalEventDefinition_0n27x2f" signalRef="Signal_0wgejar" />
+      </bpmn:endEvent>
+      <bpmn:endEvent id="ContinueEndEvent1" name="Continue">
+        <bpmn:incoming>NoSequenceFlow1</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:startEvent id="StopCurrentProcessStartEvent" name="Stop current process" isInterrupting="false">
+        <bpmn:outgoing>Flow_0wgabqt</bpmn:outgoing>
+        <bpmn:signalEventDefinition id="SignalEventDefinition_01dkt48" signalRef="Signal_1ns41f1" />
+      </bpmn:startEvent>
+    </bpmn:subProcess>
+    <bpmn:subProcess id="ExceededTimeRequestSubProcess" name="Exceeded Time Request" triggeredByEvent="true">
+      <bpmn:sequenceFlow id="Flow_1bpgsl9" sourceRef="N30minStartEvent" targetRef="TimeStopCheckTask" />
+      <bpmn:exclusiveGateway id="TimeStopCheckedGateway" name="TimeStopChecked?">
+        <bpmn:incoming>Flow_0fifp6h</bpmn:incoming>
+        <bpmn:outgoing>NoSequenceFlow</bpmn:outgoing>
+        <bpmn:outgoing>YesSequenceFlow1</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:sequenceFlow id="Flow_0fifp6h" sourceRef="TimeStopCheckTask" targetRef="TimeStopCheckedGateway" />
+      <bpmn:sequenceFlow id="NoSequenceFlow" name="Yes" sourceRef="TimeStopCheckedGateway" targetRef="CallStopProcessingEndEvent1">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${TimeStopCheck}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:endEvent id="ContinueEndEvent" name="Continue">
+        <bpmn:incoming>Flow_0i91jft</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="YesSequenceFlow1" name="No" sourceRef="TimeStopCheckedGateway" targetRef="StopOthersProcessesEvent">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!TimeStopCheck}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:userTask id="TimeStopCheckTask" name="Time stop check?">
+        <bpmn:extensionElements>
+          <camunda:formData>
+            <camunda:formField id="TimeStopCheck" label="Stop process?" type="boolean" defaultValue="dalse" />
+          </camunda:formData>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_1bpgsl9</bpmn:incoming>
+        <bpmn:outgoing>Flow_0fifp6h</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:startEvent id="N30minStartEvent" name="30min" isInterrupting="false">
+        <bpmn:outgoing>Flow_1bpgsl9</bpmn:outgoing>
+        <bpmn:timerEventDefinition id="TimerEventDefinition_1mv8tmh">
+          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT30M</bpmn:timeDuration>
+        </bpmn:timerEventDefinition>
+      </bpmn:startEvent>
+      <bpmn:endEvent id="CallStopProcessingEndEvent1" name="Call stop processing">
+        <bpmn:incoming>NoSequenceFlow</bpmn:incoming>
+        <bpmn:signalEventDefinition id="SignalEventDefinition_19wbbe2" signalRef="Signal_0wgejar" />
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_0i91jft" sourceRef="StopOthersProcessesEvent" targetRef="ContinueEndEvent" />
+      <bpmn:intermediateThrowEvent id="StopOthersProcessesEvent" name="Stop others processes">
+        <bpmn:incoming>YesSequenceFlow1</bpmn:incoming>
+        <bpmn:outgoing>Flow_0i91jft</bpmn:outgoing>
+        <bpmn:signalEventDefinition id="SignalEventDefinition_0vbxijc" signalRef="Signal_1nacsl9" />
+      </bpmn:intermediateThrowEvent>
+    </bpmn:subProcess>
+    <bpmn:subProcess id="AdditionalSecurityCheckSubProcess" name="Additional Security Check" triggeredByEvent="true">
+      <bpmn:startEvent id="Event_1c32e9v" isInterrupting="false">
+        <bpmn:outgoing>Flow_0x9d8ck</bpmn:outgoing>
+        <bpmn:signalEventDefinition id="SignalEventDefinition_1qndguh" signalRef="Signal_1gsuxag" />
+      </bpmn:startEvent>
+      <bpmn:sequenceFlow id="Flow_0x9d8ck" sourceRef="Event_1c32e9v" targetRef="SecurityApprovedTask" />
+      <bpmn:sequenceFlow id="Flow_03b30ux" sourceRef="SecurityApprovedTask" targetRef="SecurityApprovedGateway" />
+      <bpmn:userTask id="SecurityApprovedTask" name="Security Approved">
+        <bpmn:extensionElements>
+          <camunda:formData>
+            <camunda:formField id="SecurityApproved" label="Security Approved" type="boolean" defaultValue="false" />
+          </camunda:formData>
+        </bpmn:extensionElements>
+        <bpmn:incoming>Flow_0x9d8ck</bpmn:incoming>
+        <bpmn:outgoing>Flow_03b30ux</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:exclusiveGateway id="SecurityApprovedGateway" name="SecurityApproved?">
+        <bpmn:incoming>Flow_03b30ux</bpmn:incoming>
+        <bpmn:outgoing>NoSequenceFlow6</bpmn:outgoing>
+        <bpmn:outgoing>YesSequenceFlow6</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:sequenceFlow id="NoSequenceFlow6" name="No" sourceRef="SecurityApprovedGateway" targetRef="CallStopProcessingEndEvent2">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!SecurityApproved}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:endEvent id="ContinueEndEvent2" name="Continue">
+        <bpmn:incoming>YesSequenceFlow6</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="YesSequenceFlow6" name="Yes" sourceRef="SecurityApprovedGateway" targetRef="ContinueEndEvent2">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" />
+      </bpmn:sequenceFlow>
+      <bpmn:endEvent id="CallStopProcessingEndEvent2" name="Call stop processing">
+        <bpmn:incoming>NoSequenceFlow6</bpmn:incoming>
+        <bpmn:signalEventDefinition id="SignalEventDefinition_1bhak8b" signalRef="Signal_0wgejar" />
+      </bpmn:endEvent>
+    </bpmn:subProcess>
+    <bpmn:subProcess id="StopProcessSubProcess" name="Stop Process" triggeredByEvent="true">
+      <bpmn:startEvent id="StopProcessSignalStartEvent" name="Stop Process Signal">
+        <bpmn:outgoing>Flow_1jazu8z</bpmn:outgoing>
+        <bpmn:signalEventDefinition id="SignalEventDefinition_188zwk2" signalRef="Signal_0wgejar" />
+      </bpmn:startEvent>
+      <bpmn:sequenceFlow id="Flow_1jazu8z" sourceRef="StopProcessSignalStartEvent" targetRef="StopOthersProcessesEvent1" />
+      <bpmn:endEvent id="CardOpenCompensatedEndEvent" name="Card Open Compensated">
+        <bpmn:incoming>Flow_0cy05sl</bpmn:incoming>
+        <bpmn:compensateEventDefinition id="CompensateEventDefinition_1bp14g3" activityRef="OpenCardSubProcess" />
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_0cy05sl" sourceRef="StopOthersProcessesEvent1" targetRef="CardOpenCompensatedEndEvent" />
+      <bpmn:intermediateThrowEvent id="StopOthersProcessesEvent1" name="Stop others processes">
+        <bpmn:incoming>Flow_1jazu8z</bpmn:incoming>
+        <bpmn:outgoing>Flow_0cy05sl</bpmn:outgoing>
+        <bpmn:signalEventDefinition id="SignalEventDefinition_0u1hf7e" signalRef="Signal_1nacsl9" />
+      </bpmn:intermediateThrowEvent>
+    </bpmn:subProcess>
+    <bpmn:boundaryEvent id="Event_0aipali" attachedToRef="OpenCardSubProcess">
+      <bpmn:outgoing>Flow_0jhhwbe</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_06dcqon" errorRef="Error_1947nde" />
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="Flow_0qrip68" sourceRef="OpenCardStartEvent" targetRef="CheckRequestTask" />
+    <bpmn:sequenceFlow id="Flow_1g8v9k4" sourceRef="CheckRequestTask" targetRef="CheckResultTask" />
+    <bpmn:sequenceFlow id="Flow_0pkimky" sourceRef="CheckResultTask" targetRef="FrontOfficeApprovedGateway" />
+    <bpmn:sequenceFlow id="Flow_0we5r9t" sourceRef="BlacklistedRequestTask" targetRef="BlacklistedResultTask" />
+    <bpmn:sequenceFlow id="YesSequenceFlow2" name="Yes" sourceRef="FrontOfficeApprovedGateway" targetRef="AdditionalSecurityCheckGateway">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${FrontOfficeApproved}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0io74fq" sourceRef="BlacklistedResultTask" targetRef="BlacklistedGateway" />
+    <bpmn:sequenceFlow id="NoSequenceFlow4" name="No" sourceRef="BlacklistedGateway" targetRef="AdditionalSecurityCheckGateway1">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!Blacklisted}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0kv6ty8" sourceRef="OpenCardSubProcess" targetRef="CardOpenedEndEvent" />
+    <bpmn:sequenceFlow id="Flow_0jhhwbe" sourceRef="Event_0aipali" targetRef="CantOpenCardEndEvent" />
+    <bpmn:sequenceFlow id="NoSequenceFlow2" name="No" sourceRef="FrontOfficeApprovedGateway" targetRef="FrontOfficeNotApprovedEvent">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!FrontOfficeApproved}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="YesSequenceFlow4" name="Yes" sourceRef="BlacklistedGateway" targetRef="ClientInBlackListEvent">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${Blacklisted}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0ypz75b" sourceRef="ApprovedStopProcessingCatchEvent" targetRef="StopProcessEndEvent" />
+    <bpmn:sequenceFlow id="NoSequenceFlow3" name="No" sourceRef="AdditionalSecurityCheckGateway" targetRef="BlacklistedRequestTask">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!FrontOfficeSecurityCheck}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="NoSequenceFlow5" name="No" sourceRef="AdditionalSecurityCheckGateway1" targetRef="OpenCardSubProcess">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${!BlacklistedSecurityCheck}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="YesSequenceFlow3" name="Yes" sourceRef="AdditionalSecurityCheckGateway" targetRef="AdditionalSecurityReminderEvent">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${FrontOfficeSecurityCheck}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0s32l7p" sourceRef="AdditionalSecurityReminderEvent" targetRef="BlacklistedRequestTask" />
+    <bpmn:sequenceFlow id="YesSequenceFlow5" name="Yes" sourceRef="AdditionalSecurityCheckGateway1" targetRef="AdditionalSecurityReminderEvent1">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${BlacklistedSecurityCheck}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0mackqp" sourceRef="AdditionalSecurityReminderEvent1" targetRef="OpenCardSubProcess" />
+    <bpmn:sequenceFlow id="Flow_00hwrr3" sourceRef="ClientInBlackListCatchEvent" targetRef="StopProcessEndEvent" />
+  </bpmn:process>
+  <bpmn:process id="FrontOfficeProcess" name="Front Office" isExecutable="true" camunda:versionTag="Front Offive Ver1.0" camunda:isStartableInTasklist="false">
+    <bpmn:userTask id="CheckClientsInputsTask" name="Check clients inputs">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="Approved" label="Approved" type="boolean" defaultValue="false" />
+          <camunda:formField id="SecurityCheck" label="Security Check" type="boolean" defaultValue="false" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1hcm9vo</bpmn:incoming>
+      <bpmn:outgoing>Flow_0yki8wh</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:startEvent id="FrontOfficeCheckRequestStartEvent" name="Front Office Check Request">
+      <bpmn:outgoing>Flow_1hcm9vo</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0vj1h77" messageRef="Message_1cy062f" />
+    </bpmn:startEvent>
+    <bpmn:endEvent id="SendedCheckResultEndEvent" name="Sended Check Result">
+      <bpmn:incoming>Flow_0yki8wh</bpmn:incoming>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_190g62o" camunda:type="external" camunda:topic="FrontOfficeCheckResult" />
+    </bpmn:endEvent>
+    <bpmn:subProcess id="StopCurrentProcessSubProcess" name="Stop Current Process" triggeredByEvent="true">
+      <bpmn:startEvent id="StopFrontOfficeCheckStartEvent" name="Stop Front Office Check">
+        <bpmn:outgoing>Flow_182un8e</bpmn:outgoing>
+        <bpmn:signalEventDefinition id="SignalEventDefinition_0w6ts3v" signalRef="Signal_1nacsl9" />
+      </bpmn:startEvent>
+      <bpmn:sequenceFlow id="Flow_182un8e" sourceRef="StopFrontOfficeCheckStartEvent" targetRef="Event_1qj9e4n" />
+      <bpmn:endEvent id="Event_1qj9e4n">
+        <bpmn:incoming>Flow_182un8e</bpmn:incoming>
+        <bpmn:terminateEventDefinition id="TerminateEventDefinition_136n6tp" />
+      </bpmn:endEvent>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_1hcm9vo" sourceRef="FrontOfficeCheckRequestStartEvent" targetRef="CheckClientsInputsTask" />
+    <bpmn:sequenceFlow id="Flow_0yki8wh" sourceRef="CheckClientsInputsTask" targetRef="SendedCheckResultEndEvent" />
+  </bpmn:process>
+  <bpmn:process id="BlacklistProcess" name="Blacklist process" isExecutable="true" camunda:versionTag="Blacklist Ver1.0" camunda:isStartableInTasklist="false">
+    <bpmn:startEvent id="BlackListServiceCheckedStartEvent" name="BlackList Service Checked">
+      <bpmn:outgoing>Flow_05e1k6g</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_16gzm64" messageRef="Message_18h9fh8" />
+    </bpmn:startEvent>
+    <bpmn:endEvent id="SecurityCheckCompletedEndEvent" name="Security Check Completed">
+      <bpmn:incoming>Flow_1oogutv</bpmn:incoming>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1hfob1p" camunda:type="external" camunda:topic="BlacklistResulted" />
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="BlacklistedTask" name="Blacklisted" camunda:type="external" camunda:topic="OpenCardBlackList">
+      <bpmn:incoming>Flow_05e1k6g</bpmn:incoming>
+      <bpmn:outgoing>Flow_1oogutv</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:subProcess id="StopCurrentProcessSubProcess1" name="Stop Current Process" triggeredByEvent="true">
+      <bpmn:startEvent id="StopSecurityCheckStartEvent" name="Stop Security Check ">
+        <bpmn:outgoing>Flow_0lep08z</bpmn:outgoing>
+        <bpmn:signalEventDefinition id="SignalEventDefinition_0wqyvw4" signalRef="Signal_1nacsl9" />
+      </bpmn:startEvent>
+      <bpmn:sequenceFlow id="Flow_0lep08z" sourceRef="StopSecurityCheckStartEvent" targetRef="Event_1sqwhqa" />
+      <bpmn:endEvent id="Event_1sqwhqa">
+        <bpmn:incoming>Flow_0lep08z</bpmn:incoming>
+        <bpmn:terminateEventDefinition id="TerminateEventDefinition_03o6n65" />
+      </bpmn:endEvent>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_05e1k6g" sourceRef="BlackListServiceCheckedStartEvent" targetRef="BlacklistedTask" />
+    <bpmn:sequenceFlow id="Flow_1oogutv" sourceRef="BlacklistedTask" targetRef="SecurityCheckCompletedEndEvent" />
+  </bpmn:process>
+  <bpmn:message id="Message_1cy062f" name="FrontOfficeCheck" />
+  <bpmn:message id="Message_18equk1" name="FrontOfficeCheckResult" />
+  <bpmn:signal id="Signal_1gsuxag" name="AdditionalSecurity" />
+  <bpmn:message id="Message_18h9fh8" name="BlacklistRequested" />
+  <bpmn:message id="Message_0tzxw5p" name="BlacklistResult" />
+  <bpmn:error id="Error_1947nde" name="CantOpenCard" errorCode="OpenCard_1" />
+  <bpmn:message id="Message_0gy2fxe" name="StopCardOpenProcess" />
+  <bpmn:signal id="Signal_0wgejar" name="StopProcessing" />
+  <bpmn:message id="Message_04j8uuh" name="StopCardOpen" />
+  <bpmn:signal id="Signal_1nacsl9" name="StopOthersProcesses" />
+  <bpmn:signal id="Signal_1ns41f1" name="CardOpenStopProcessingSignal" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1bhdyw1">
+      <bpmndi:BPMNShape id="Participant_0wnhuje_di" bpmnElement="FrontOfficeParticipant" isHorizontal="true">
+        <dc:Bounds x="150" y="80" width="600" height="500" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1hcm9vo_di" bpmnElement="Flow_1hcm9vo">
+        <di:waypoint x="268" y="450" />
+        <di:waypoint x="380" y="450" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0yki8wh_di" bpmnElement="Flow_0yki8wh">
+        <di:waypoint x="480" y="450" />
+        <di:waypoint x="592" y="450" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_1mtqx4u_di" bpmnElement="CheckClientsInputsTask">
+        <dc:Bounds x="380" y="410" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0p1fmc9_di" bpmnElement="FrontOfficeCheckRequestStartEvent">
+        <dc:Bounds x="232" y="432" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="212" y="402" width="77" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0nz6tx2_di" bpmnElement="SendedCheckResultEndEvent">
+        <dc:Bounds x="592" y="432" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="575" y="402" width="73" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_03jbhd9_di" bpmnElement="StopCurrentProcessSubProcess" isExpanded="true">
+        <dc:Bounds x="280" y="120" width="350" height="200" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_182un8e_di" bpmnElement="Flow_182un8e">
+        <di:waypoint x="356" y="220" />
+        <di:waypoint x="552" y="220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1isf1sm_di" bpmnElement="StopFrontOfficeCheckStartEvent">
+        <dc:Bounds x="320" y="202" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="297" y="245" width="83" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_12c0ipp_di" bpmnElement="Event_1qj9e4n">
+        <dc:Bounds x="552" y="202" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_0te83do_di" bpmnElement="CheckClientBlackListParticipant" isHorizontal="true">
+        <dc:Bounds x="870" y="80" width="600" height="500" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_05e1k6g_di" bpmnElement="Flow_05e1k6g">
+        <di:waypoint x="988" y="440" />
+        <di:waypoint x="1110" y="440" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1oogutv_di" bpmnElement="Flow_1oogutv">
+        <di:waypoint x="1210" y="440" />
+        <di:waypoint x="1352" y="440" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_0blfftc_di" bpmnElement="BlackListServiceCheckedStartEvent">
+        <dc:Bounds x="952" y="422" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="928" y="392" width="84" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1387kf8_di" bpmnElement="SecurityCheckCompletedEndEvent">
+        <dc:Bounds x="1352" y="422" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1334" y="392" width="75" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1a5h0kv_di" bpmnElement="BlacklistedTask">
+        <dc:Bounds x="1110" y="400" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1bus0gc_di" bpmnElement="StopCurrentProcessSubProcess1" isExpanded="true">
+        <dc:Bounds x="1010" y="120" width="350" height="200" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0lep08z_di" bpmnElement="Flow_0lep08z">
+        <di:waypoint x="1086" y="220" />
+        <di:waypoint x="1282" y="220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_0sviany_di" bpmnElement="StopSecurityCheckStartEvent">
+        <dc:Bounds x="1050" y="202" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1035" y="245" width="66" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1nmu800_di" bpmnElement="Event_1sqwhqa">
+        <dc:Bounds x="1282" y="202" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_0rmnecp_di" bpmnElement="OpenCardParticipant" isHorizontal="true">
+        <dc:Bounds x="150" y="670" width="2288" height="1090" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0qrip68_di" bpmnElement="Flow_0qrip68" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <di:waypoint x="279" y="821" />
+        <di:waypoint x="330" y="821" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1g8v9k4_di" bpmnElement="Flow_1g8v9k4" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <di:waypoint x="430" y="821" />
+        <di:waypoint x="490" y="821" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0pkimky_di" bpmnElement="Flow_0pkimky" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <di:waypoint x="590" y="821" />
+        <di:waypoint x="645" y="821" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0we5r9t_di" bpmnElement="Flow_0we5r9t" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <di:waypoint x="1020" y="821" />
+        <di:waypoint x="1090" y="821" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_068ryve_di" bpmnElement="YesSequenceFlow2" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <di:waypoint x="695" y="821" />
+        <di:waypoint x="770" y="821" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="724" y="803" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0io74fq_di" bpmnElement="Flow_0io74fq" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <di:waypoint x="1190" y="821" />
+        <di:waypoint x="1245" y="821" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16lj93a_di" bpmnElement="NoSequenceFlow4" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <di:waypoint x="1295" y="821" />
+        <di:waypoint x="1365" y="821" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1323" y="803" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0kv6ty8_di" bpmnElement="Flow_0kv6ty8" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <di:waypoint x="2100" y="821" />
+        <di:waypoint x="2302" y="821" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0jhhwbe_di" bpmnElement="Flow_0jhhwbe">
+        <di:waypoint x="2118" y="1120" />
+        <di:waypoint x="2312" y="1120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1655fw0_di" bpmnElement="NoSequenceFlow2">
+        <di:waypoint x="670" y="846" />
+        <di:waypoint x="670" y="922" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="678" y="881" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0gkv2ud_di" bpmnElement="YesSequenceFlow4">
+        <di:waypoint x="1270" y="846" />
+        <di:waypoint x="1270" y="922" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1276" y="881" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ypz75b_di" bpmnElement="Flow_0ypz75b">
+        <di:waypoint x="2118" y="1310" />
+        <di:waypoint x="2312" y="1310" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0w4pg78_di" bpmnElement="NoSequenceFlow3" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <di:waypoint x="820" y="821" />
+        <di:waypoint x="920" y="821" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="863" y="803" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ocx3ci_di" bpmnElement="NoSequenceFlow5" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <di:waypoint x="1415" y="821" />
+        <di:waypoint x="1520" y="821" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1460" y="803" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14kw8r0_di" bpmnElement="YesSequenceFlow3">
+        <di:waypoint x="795" y="846" />
+        <di:waypoint x="795" y="922" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="801" y="881" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0s32l7p_di" bpmnElement="Flow_0s32l7p">
+        <di:waypoint x="813" y="940" />
+        <di:waypoint x="970" y="940" />
+        <di:waypoint x="970" y="861" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_06acddt_di" bpmnElement="YesSequenceFlow5">
+        <di:waypoint x="1390" y="846" />
+        <di:waypoint x="1390" y="922" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1396" y="881" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0mackqp_di" bpmnElement="Flow_0mackqp">
+        <di:waypoint x="1408" y="940" />
+        <di:waypoint x="1520" y="940" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_00hwrr3_di" bpmnElement="Flow_00hwrr3">
+        <di:waypoint x="2118" y="1500" />
+        <di:waypoint x="2330" y="1500" />
+        <di:waypoint x="2330" y="1328" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="OpenCardStartEvent" bioc:stroke="black" bioc:fill="white">
+        <dc:Bounds x="243" y="803" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="236" y="846" width="51" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_18zt6m7_di" bpmnElement="CheckRequestTask" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <dc:Bounds x="330" y="781" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_18syios_di" bpmnElement="CheckResultTask" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <dc:Bounds x="490" y="781" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_18scmpg_di" bpmnElement="FrontOfficeApprovedGateway" isMarkerVisible="true" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <dc:Bounds x="645" y="796" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="641" y="766" width="58" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_095qc7a_di" bpmnElement="BlacklistedRequestTask" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <dc:Bounds x="920" y="781" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_00105ts_di" bpmnElement="BlacklistedResultTask" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <dc:Bounds x="1090" y="781" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0o5ybo9_di" bpmnElement="BlacklistedGateway" isMarkerVisible="true" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <dc:Bounds x="1245" y="796" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1241" y="766" width="59" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_16u4pz2_di" bpmnElement="FrontOfficeNotApprovedEvent">
+        <dc:Bounds x="652" y="922" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="631" y="965" width="79" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1ly9p7h_di" bpmnElement="ClientInBlackListEvent">
+        <dc:Bounds x="1252" y="922" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1235" y="965" width="71" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1r3ld7x_di" bpmnElement="AdditionalSecurityCheckGateway" isMarkerVisible="true" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <dc:Bounds x="770" y="796" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="755" y="766" width="81" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_19qo6oo_di" bpmnElement="AdditionalSecurityCheckGateway1" isMarkerVisible="true" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <dc:Bounds x="1365" y="796" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1350" y="766" width="81" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1kskfgf_di" bpmnElement="AdditionalSecurityReminderEvent">
+        <dc:Bounds x="777" y="922" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="771" y="965" width="50" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_01hkgtn_di" bpmnElement="AdditionalSecurityReminderEvent1">
+        <dc:Bounds x="1372" y="922" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1366" y="965" width="50" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_16hitmp_di" bpmnElement="CardOpenedEndEvent" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <dc:Bounds x="2302" y="803" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2287" y="846" width="67" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0210ba5_di" bpmnElement="CantOpenCardEndEvent">
+        <dc:Bounds x="2312" y="1102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2290" y="1145" width="81" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0vrn4kt_di" bpmnElement="ApprovedStopProcessingCatchEvent">
+        <dc:Bounds x="2082" y="1292" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2058" y="1335" width="87" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1157f6z_di" bpmnElement="ClientInBlackListCatchEvent">
+        <dc:Bounds x="2082" y="1482" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2065" y="1525" width="71" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1lkb9vk_di" bpmnElement="StopProcessEndEvent">
+        <dc:Bounds x="2312" y="1292" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2297" y="1262" width="66" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1gysp7j_di" bpmnElement="OpenCardSubProcess" isExpanded="true" bioc:stroke="rgb(67, 160, 71)" bioc:fill="rgb(200, 230, 201)">
+        <dc:Bounds x="1520" y="716" width="580" height="404" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1lfq1ht_di" bpmnElement="Flow_1lfq1ht">
+        <di:waypoint x="1570" y="952" />
+        <di:waypoint x="1570" y="830" />
+        <di:waypoint x="1650" y="830" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10wn1sl_di" bpmnElement="Flow_10wn1sl">
+        <di:waypoint x="1750" y="830" />
+        <di:waypoint x="1840" y="830" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1h8g742_di" bpmnElement="Flow_1h8g742">
+        <di:waypoint x="1940" y="830" />
+        <di:waypoint x="2020" y="830" />
+        <di:waypoint x="2020" y="952" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_0j3ukxt_di" bpmnElement="StartProcessStartEvent">
+        <dc:Bounds x="1552" y="952" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1537" y="995" width="67" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_16ore4i_di" bpmnElement="OpenedEndEvent">
+        <dc:Bounds x="2002" y="952" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2000" y="995" width="40" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_14upsx6_di" bpmnElement="SendCardTask">
+        <dc:Bounds x="1840" y="790" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0oenfry_di" bpmnElement="DestroyCardTask">
+        <dc:Bounds x="1650" y="980" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1it86we_di" bpmnElement="ReturnCardToOfficeTask">
+        <dc:Bounds x="1840" y="980" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1m00cg1_di" bpmnElement="CreatePlasticCardTask">
+        <dc:Bounds x="1650" y="790" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_12ghu95_di" bpmnElement="Association_12ghu95">
+        <di:waypoint x="1700" y="888" />
+        <di:waypoint x="1700" y="980" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_16zqjrp_di" bpmnElement="Association_16zqjrp">
+        <di:waypoint x="1890" y="888" />
+        <di:waypoint x="1890" y="980" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_0tbertq_di" bpmnElement="Event_0jv55uf">
+        <dc:Bounds x="1872" y="852" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1i6zyup_di" bpmnElement="Event_1ktt5jb">
+        <dc:Bounds x="1682" y="852" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_03n5pk3_di" bpmnElement="StopProcessingSubProcess" isExpanded="true">
+        <dc:Bounds x="240" y="1070" width="580" height="290" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0wgabqt_di" bpmnElement="Flow_0wgabqt">
+        <di:waypoint x="316" y="1170" />
+        <di:waypoint x="370" y="1170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1xtcm3z_di" bpmnElement="Flow_1xtcm3z">
+        <di:waypoint x="470" y="1170" />
+        <di:waypoint x="555" y="1170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0nhgtxp_di" bpmnElement="YesSequenceFlow">
+        <di:waypoint x="605" y="1170" />
+        <di:waypoint x="722" y="1170" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="655" y="1152" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1trgx84_di" bpmnElement="NoSequenceFlow1">
+        <di:waypoint x="580" y="1195" />
+        <di:waypoint x="580" y="1280" />
+        <di:waypoint x="722" y="1280" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="588" y="1235" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Activity_0wxnc55_di" bpmnElement="StopCheckTask">
+        <dc:Bounds x="370" y="1130" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0vtot8b_di" bpmnElement="StopProcessGateway" isMarkerVisible="true">
+        <dc:Bounds x="555" y="1145" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="546" y="1115" width="69" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1tfigrp_di" bpmnElement="CallStopProcessingEndEvent">
+        <dc:Bounds x="722" y="1152" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="713" y="1195" width="54" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1weh2s7_di" bpmnElement="ContinueEndEvent1">
+        <dc:Bounds x="722" y="1262" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="718" y="1305" width="45" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_09v0pdn_di" bpmnElement="StopCurrentProcessStartEvent">
+        <dc:Bounds x="280" y="1152" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="268" y="1195" width="61" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1gloz9c_di" bpmnElement="ExceededTimeRequestSubProcess" isExpanded="true">
+        <dc:Bounds x="870" y="1070" width="580" height="290" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1bpgsl9_di" bpmnElement="Flow_1bpgsl9">
+        <di:waypoint x="946" y="1170" />
+        <di:waypoint x="1000" y="1170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0fifp6h_di" bpmnElement="Flow_0fifp6h">
+        <di:waypoint x="1100" y="1170" />
+        <di:waypoint x="1155" y="1170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1gg4ygy_di" bpmnElement="NoSequenceFlow">
+        <di:waypoint x="1205" y="1170" />
+        <di:waypoint x="1342" y="1170" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1266" y="1152" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1n68oiw_di" bpmnElement="YesSequenceFlow1">
+        <di:waypoint x="1180" y="1195" />
+        <di:waypoint x="1180" y="1262" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1189" y="1225" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0i91jft_di" bpmnElement="Flow_0i91jft">
+        <di:waypoint x="1198" y="1280" />
+        <di:waypoint x="1342" y="1280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Gateway_1gwj2oq_di" bpmnElement="TimeStopCheckedGateway" isMarkerVisible="true">
+        <dc:Bounds x="1155" y="1145" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1143" y="1115" width="83" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1gy8334_di" bpmnElement="TimeStopCheckTask">
+        <dc:Bounds x="1000" y="1130" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_01xrepd_di" bpmnElement="N30minStartEvent">
+        <dc:Bounds x="910" y="1152" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="913" y="1195" width="30" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_15xd8wl_di" bpmnElement="ContinueEndEvent">
+        <dc:Bounds x="1342" y="1262" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1338" y="1305" width="45" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0trh3uk_di" bpmnElement="CallStopProcessingEndEvent1">
+        <dc:Bounds x="1342" y="1152" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1333" y="1195" width="54" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1l61zri_di" bpmnElement="StopOthersProcessesEvent">
+        <dc:Bounds x="1162" y="1262" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1152" y="1305" width="57" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1q2au9d_di" bpmnElement="AdditionalSecurityCheckSubProcess" isExpanded="true">
+        <dc:Bounds x="240" y="1410" width="580" height="290" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0x9d8ck_di" bpmnElement="Flow_0x9d8ck">
+        <di:waypoint x="318" y="1510" />
+        <di:waypoint x="380" y="1510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03b30ux_di" bpmnElement="Flow_03b30ux">
+        <di:waypoint x="480" y="1510" />
+        <di:waypoint x="555" y="1510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ysj4wp_di" bpmnElement="NoSequenceFlow6">
+        <di:waypoint x="605" y="1510" />
+        <di:waypoint x="732" y="1510" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="661" y="1492" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_09xorl3_di" bpmnElement="YesSequenceFlow6">
+        <di:waypoint x="580" y="1535" />
+        <di:waypoint x="580" y="1620" />
+        <di:waypoint x="732" y="1620" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="586" y="1575" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1w6gagc_di" bpmnElement="Event_1c32e9v">
+        <dc:Bounds x="282" y="1492" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_09p1gzo_di" bpmnElement="ContinueEndEvent2">
+        <dc:Bounds x="732" y="1602" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="728" y="1645" width="45" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_02yb271_di" bpmnElement="SecurityApprovedTask">
+        <dc:Bounds x="380" y="1470" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0oirzfg_di" bpmnElement="SecurityApprovedGateway" isMarkerVisible="true">
+        <dc:Bounds x="555" y="1485" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="540" y="1455" width="81" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_099zwou_di" bpmnElement="CallStopProcessingEndEvent2">
+        <dc:Bounds x="732" y="1492" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="723" y="1535" width="54" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1q67qxf_di" bpmnElement="StopProcessSubProcess" isExpanded="true">
+        <dc:Bounds x="870" y="1410" width="580" height="200" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1jazu8z_di" bpmnElement="Flow_1jazu8z">
+        <di:waypoint x="946" y="1510" />
+        <di:waypoint x="1132" y="1510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0cy05sl_di" bpmnElement="Flow_0cy05sl">
+        <di:waypoint x="1168" y="1510" />
+        <di:waypoint x="1342" y="1510" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1keyvfy_di" bpmnElement="StopProcessSignalStartEvent">
+        <dc:Bounds x="910" y="1492" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="895" y="1535" width="66" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1klz8hw_di" bpmnElement="CardOpenCompensatedEndEvent">
+        <dc:Bounds x="1342" y="1492" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1328" y="1535" width="69" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_07t7btx_di" bpmnElement="StopOthersProcessesEvent1">
+        <dc:Bounds x="1132" y="1492" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1122" y="1535" width="57" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1gopr44_di" bpmnElement="Event_0aipali">
+        <dc:Bounds x="2082" y="1102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0c770ev_di" bpmnElement="Flow_0c770ev">
+        <di:waypoint x="380" y="781" />
+        <di:waypoint x="380" y="630" />
+        <di:waypoint x="250" y="630" />
+        <di:waypoint x="250" y="468" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_000mjoi_di" bpmnElement="Flow_000mjoi">
+        <di:waypoint x="610" y="468" />
+        <di:waypoint x="610" y="630" />
+        <di:waypoint x="540" y="630" />
+        <di:waypoint x="540" y="781" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0xd8exk_di" bpmnElement="Flow_0xd8exk">
+        <di:waypoint x="970" y="781" />
+        <di:waypoint x="970" y="458" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1s5xl6q_di" bpmnElement="Flow_1s5xl6q">
+        <di:waypoint x="1370" y="458" />
+        <di:waypoint x="1370" y="625" />
+        <di:waypoint x="1140" y="625" />
+        <di:waypoint x="1140" y="781" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
